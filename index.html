@@ -211,20 +211,20 @@
       <p>Win ₦10,000 Airtime</p>
     </div>
     <div class="pill-stats">
-      <div class="pill gold"><i class="fa-solid fa-coins"></i> <span id="keysLeft">0</span> keys left</div>
+      <div class="pill gold"><i class="fa-solid fa-coins"></i> <span id="keysLeft">Active</span> keys left</div>
       <div class="pill"><i class="fa-solid fa-bolt"></i> Instant claim</div>
     </div>
 
     <div class="input-group">
       <label>GIVEAWAY KEY</label>
-      <input id="keyInput" placeholder="WIN-XXXX-XXXX" autocomplete="off">
+      <input id="keyInput" placeholder="WIN-XXXX-XXXX-XXXX" autocomplete="off">
     </div>
     <button class="btn-claim" onclick="claim()">
       <i class="fa-solid fa-bolt"></i> CLAIM AIRTIME
     </button>
     <div class="status-bar">
       <span><i class="fa-solid fa-circle-info"></i> Cloud storage</span>
-      <span id="sessionCount">0 / 0 remaining</span>
+      <span id="sessionCount">Secured by Firebase</span>
     </div>
     <p id="result" style="text-align:center; font-weight:700; margin-top:16px; font-size:13px;"></p>
   </div>
@@ -255,7 +255,7 @@
         <div class="step-num">01</div>
         <div class="step-text">
           <strong>Get your key</strong>
-          <p>Ask the admin or check the WhatsApp group for a WIN-XXXX-XXXX key</p>
+          <p>Ask the admin or check the WhatsApp group for a WIN-XXXX-XXXX-XXXX key</p>
         </div>
       </div>
       <div class="step">
@@ -330,7 +330,7 @@
 
     <div class="admin-section glass-panel">
       <h3><i class="fa-solid fa-bolt"></i> Key Generator</h3>
-      <p>Generate unlimited keys. Duplicates are automatically filtered.</p>
+      <p>Generate cryptographically secure keys. Duplicates are automatically filtered.</p>
       <div class="gen-inputs">
         <input id="genCount" type="number" value="10" placeholder="Qty">
         <input id="genPrefix" value="WIN" placeholder="Prefix">
@@ -391,7 +391,6 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  // Notice we import getDoc here now
   import { getFirestore, collection, doc, getDocs, getDoc, setDoc, deleteDoc, updateDoc, query, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -415,7 +414,6 @@
     document.getElementById('admin').style.display = v == 'admin' ? 'flex' : 'none';
     document.getElementById('navUser').classList.toggle('active', v == 'user');
     document.getElementById('navAdmin').classList.toggle('active', v == 'admin');
-    if (v === 'user') loadKeysPublic();
   };
 
   window.login = async function() {
@@ -457,24 +455,8 @@
     } else {
       document.getElementById('loginBox').style.display = 'block';
       document.getElementById('dash').style.display = 'none';
-      loadKeysPublic();
     }
   });
-
-  async function loadKeysPublic() {
-    // Note: With strict rules, we cannot count unused keys without admin access.
-    // We will just show a generic message or handle it gracefully.
-    try {
-      // In a strict setup, this will fail because we can't "list" keys.
-      const q = query(collection(db, "giveaway_keys"), where("used", "==", false));
-      const querySnapshot = await getDocs(q);
-      let unusedCount = querySnapshot.size;
-      document.getElementById('keysLeft').textContent = unusedCount;
-    } catch (e) {
-      // If blocked by rules, show a dash or a generic active status
-      document.getElementById('keysLeft').textContent = "Active";
-    }
-  }
 
   async function loadKeysAdmin() {
     try {
@@ -497,7 +479,6 @@
     }
   }
 
-  // THE UPDATED CLAIM FUNCTION (USES getDoc directly)
   window.claim = async function() {
     let inp = document.getElementById('keyInput').value.toUpperCase().trim();
     let res = document.getElementById('result');
@@ -506,7 +487,7 @@
     document.getElementById('loading').style.display = 'flex';
 
     try {
-      // Directly fetch the document by its exact key name (which is the Document ID)
+      // Fetch the exact document directly by its ID (the key string)
       const docRef = doc(db, "giveaway_keys", inp);
       const docSnap = await getDoc(docRef);
 
@@ -521,7 +502,6 @@
       if (data.used) {
         res.textContent='❌ This key has already been used!'; res.style.color='var(--red)';
       } else {
-        // Mark as used
         await updateDoc(docRef, {
           used: true,
           usedAt: new Date().toLocaleString()
@@ -530,11 +510,6 @@
         res.textContent='🎉 CONGRATULATIONS! You have won ₦10,000!'; 
         res.style.color='var(--green)';
         document.getElementById('keyInput').value = '';
-        
-        // Let admin know (if they have the dashboard open)
-        if(typeof loadKeysAdmin === 'function') {
-           // This is just for the admin view if they are on the same browser
-        }
       }
     } catch (e) {
       console.error(e);
@@ -557,10 +532,14 @@
       let generated = [];
 
       for(let i=0;i<n;i++){
-        let r = Math.random().toString(36).substring(2,6).toUpperCase() + '-' + Math.random().toString(36).substring(2,6).toUpperCase();
-        let keyStr = pre + '-' + r;
+        // CRYPTOGRAPHICALLY SECURE KEY GENERATION
+        // Generates 4 random hex bytes, maps to string, pads with 0, uppercases
+        let r1 = Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+        let r2 = Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
         
-        // We are setting the Document ID to be the exact Key Name
+        let keyStr = pre + '-' + r1 + '-' + r2;
+        
+        // We set the Document ID to be the exact Key Name
         const newDocRef = doc(db, "giveaway_keys", keyStr);
         batch.set(newDocRef, { k: keyStr, used: false, createdAt: now + i });
         generated.push({id: newDocRef.id, k: keyStr, used: false, createdAt: now + i});
@@ -571,7 +550,6 @@
       keys = [...generated, ...keys];
       render();
       renderLiveFeed();
-      loadKeysPublic();
     } catch (e) {
       console.error(e);
       alert("Error generating keys.");
@@ -587,7 +565,6 @@
     document.getElementById('loading').style.display = 'flex';
 
     try {
-      // We use the key name as the Document ID
       const newDocRef = doc(db, "giveaway_keys", k);
       await setDoc(newDocRef, { k: k, used: false, createdAt: Date.now() });
       
@@ -595,10 +572,9 @@
       document.getElementById('singleKey').value=''; 
       render();
       renderLiveFeed();
-      loadKeysPublic();
     } catch (e) {
       console.error(e);
-      alert("Error adding key.");
+      alert("Error adding key. (Key might already exist)");
     }
     
     document.getElementById('loading').style.display = 'none';
@@ -612,7 +588,6 @@
         keys = keys.filter(x => x.id !== id);
         render();
         renderLiveFeed();
-        loadKeysPublic();
       } catch (e) {
         console.error(e);
         alert("Error deleting key.");
@@ -634,7 +609,6 @@
         keys = keys.filter(x => !x.used);
         render();
         renderLiveFeed();
-        loadKeysPublic();
       } catch (e) {
         console.error(e);
         alert("Error clearing used keys.");
@@ -655,7 +629,6 @@
         keys = [];
         render();
         renderLiveFeed();
-        loadKeysPublic();
       } catch (e) {
         console.error(e);
         alert("Error deleting all keys.");
@@ -746,8 +719,6 @@
     a.click(); 
   }
 
-  loadKeysPublic();
-
 </script>
 </body>
-</html>
+  </html>

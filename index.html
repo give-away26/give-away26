@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Giveaway Pro - Secure Cloud</title>
+<title>Giveaway Pro - Expiring Keys</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
@@ -16,6 +16,7 @@
     --gold: #ffcc00;
     --green: #20c997;
     --red: #ff4d4f;
+    --orange: #ff9800;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
@@ -124,6 +125,36 @@
   .gen-inputs input { background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); color: #fff; padding: 14px; border-radius: 14px; font-size: 13px; outline: none; }
   .gen-inputs input:first-child { width: 80px; text-align: center; }
   .gen-inputs input:last-child { flex: 1; }
+  
+  /* CUSTOM FONT AWESOME DROPDOWN */
+  .custom-select-wrapper { position: relative; margin-bottom: 12px; }
+  .custom-select-trigger {
+    width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border);
+    color: #fff; padding: 14px 14px 14px 42px; border-radius: 14px; font-size: 13px; 
+    cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+    transition: 0.2s;
+  }
+  .custom-select-trigger i.fa-clock-rotate-left { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--gold); font-size: 14px; }
+  .custom-select-trigger i.fa-chevron-down { font-size: 10px; color: var(--text-muted); transition: transform 0.3s; }
+  .custom-select-wrapper.open .custom-select-trigger i.fa-chevron-down { transform: rotate(180deg); }
+  
+  .custom-options {
+    position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+    background: rgba(20, 20, 25, 0.95); backdrop-filter: blur(24px);
+    border: 1px solid var(--glass-border); border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    max-height: 250px; overflow-y: auto; z-index: 100;
+    display: none; flex-direction: column; padding: 6px;
+  }
+  .custom-select-wrapper.open .custom-options { display: flex; }
+  
+  .custom-option {
+    padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+    border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s;
+  }
+  .custom-option:hover { background: rgba(255,255,255,0.08); }
+  .custom-option.selected { background: rgba(255, 204, 0, 0.15); color: var(--gold); }
+  .custom-option i { width: 16px; text-align: center; font-size: 13px; }
 
   .add-input-group { display: flex; gap: 10px; }
   .add-input-group input { flex: 1; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); color: #fff; padding: 14px; border-radius: 14px; outline: none; font-size: 13px; }
@@ -147,9 +178,12 @@
   .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; }
   .status-dot.unused { background: var(--green); box-shadow: 0 0 8px var(--green); }
   .status-dot.used { background: var(--red); box-shadow: 0 0 8px var(--red); }
+  .status-dot.expired { background: var(--orange); box-shadow: 0 0 8px var(--orange); }
+  
   .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 8px; font-weight: 800; }
   .status-badge.unused { background: rgba(32,201,151,0.15); color: var(--green); border: 1px solid rgba(32,201,151,0.3); }
   .status-badge.used { background: rgba(255,77,79,0.15); color: var(--red); border: 1px solid rgba(255,77,79,0.3); }
+  .status-badge.expired { background: rgba(255,152,0,0.15); color: var(--orange); border: 1px solid rgba(255,152,0,0.3); }
 
   .action-btns { display: flex; gap: 6px; justify-content: flex-end; }
   .icon-btn { background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; }
@@ -313,9 +347,9 @@
         <div class="stat-line" style="width:25%; background:var(--green);"></div>
       </div>
       <div class="stat-card glass-panel">
-        <div class="stat-top"><i class="fa-solid fa-trophy"></i> TOTAL CLAIMS</div>
-        <div class="stat-val" id="tClaims">0</div>
-        <div class="stat-line" style="width:25%; background:var(--gold);"></div>
+        <div class="stat-top"><i class="fa-solid fa-clock"></i> EXPIRED</div>
+        <div class="stat-val" id="tExpired" style="color:var(--orange);">0</div>
+        <div class="stat-line" style="width:25%; background:var(--orange);"></div>
       </div>
     </div>
 
@@ -331,10 +365,53 @@
     <div class="admin-section glass-panel">
       <h3><i class="fa-solid fa-bolt"></i> Key Generator</h3>
       <p>Generate cryptographically secure keys. Duplicates are automatically filtered.</p>
+      
       <div class="gen-inputs">
         <input id="genCount" type="number" value="10" placeholder="Qty">
         <input id="genPrefix" value="WIN" placeholder="Prefix">
       </div>
+      
+      <!-- CUSTOM FONT AWESOME DROPDOWN -->
+      <div class="custom-select-wrapper" id="expiryDropdown">
+        <div class="custom-select-trigger" onclick="toggleDropdown()">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span id="selectedExpiryText">Never Expires</span>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <div class="custom-options">
+          <div class="custom-option selected" data-value="never" onclick="selectOption(this)">
+            <i class="fa-solid fa-infinity"></i> Never Expires
+          </div>
+          <div class="custom-option" data-value="10s" onclick="selectOption(this)">
+            <i class="fa-solid fa-stopwatch"></i> 10 Seconds (Test)
+          </div>
+          <div class="custom-option" data-value="30s" onclick="selectOption(this)">
+            <i class="fa-solid fa-stopwatch"></i> 30 Seconds (Test)
+          </div>
+          <div class="custom-option" data-value="1m" onclick="selectOption(this)">
+            <i class="fa-solid fa-hourglass-start"></i> 1 Minute
+          </div>
+          <div class="custom-option" data-value="5m" onclick="selectOption(this)">
+            <i class="fa-solid fa-hourglass-half"></i> 5 Minutes
+          </div>
+          <div class="custom-option" data-value="1h" onclick="selectOption(this)">
+            <i class="fa-solid fa-hourglass-end"></i> 1 Hour
+          </div>
+          <div class="custom-option" data-value="6h" onclick="selectOption(this)">
+            <i class="fa-solid fa-clock"></i> 6 Hours
+          </div>
+          <div class="custom-option" data-value="24h" onclick="selectOption(this)">
+            <i class="fa-solid fa-calendar-day"></i> 24 Hours (1 Day)
+          </div>
+          <div class="custom-option" data-value="7d" onclick="selectOption(this)">
+            <i class="fa-solid fa-calendar-week"></i> 7 Days
+          </div>
+          <div class="custom-option" data-value="30d" onclick="selectOption(this)">
+            <i class="fa-solid fa-calendar-days"></i> 30 Days
+          </div>
+        </div>
+      </div>
+
       <button class="btn-claim" onclick="genKeys()">
         <i class="fa-solid fa-wand-magic-sparkles"></i> GENERATE <span id="genBtnText">10</span> KEYS
       </button>
@@ -408,6 +485,34 @@
   const db = getFirestore(app);
 
   let keys = [];
+  let selectedExpiryValue = "never";
+
+  // CUSTOM DROPDOWN LOGIC
+  window.toggleDropdown = function() {
+    const wrapper = document.getElementById('expiryDropdown');
+    wrapper.classList.toggle('open');
+  };
+
+  window.selectOption = function(element) {
+    // Remove selected class from all
+    document.querySelectorAll('.custom-option').forEach(el => el.classList.remove('selected'));
+    // Add to clicked
+    element.classList.add('selected');
+    // Update text
+    document.getElementById('selectedExpiryText').textContent = element.textContent.trim();
+    // Store value
+    selectedExpiryValue = element.getAttribute('data-value');
+    // Close dropdown
+    document.getElementById('expiryDropdown').classList.remove('open');
+  };
+
+  // Close dropdown if clicked outside
+  window.addEventListener('click', function(e) {
+    const wrapper = document.getElementById('expiryDropdown');
+    if (wrapper && !wrapper.contains(e.target)) {
+      wrapper.classList.remove('open');
+    }
+  });
 
   window.showView = function(v) {
     document.getElementById('user').style.display = v == 'user' ? 'flex' : 'none';
@@ -479,6 +584,11 @@
     }
   }
 
+  function isKeyExpired(keyData) {
+    if (!keyData.expiresAt) return false;
+    return Date.now() > keyData.expiresAt;
+  }
+
   window.claim = async function() {
     let inp = document.getElementById('keyInput').value.toUpperCase().trim();
     let res = document.getElementById('result');
@@ -487,7 +597,6 @@
     document.getElementById('loading').style.display = 'flex';
 
     try {
-      // Fetch the exact document directly by its ID (the key string)
       const docRef = doc(db, "giveaway_keys", inp);
       const docSnap = await getDoc(docRef);
 
@@ -498,6 +607,12 @@
       }
 
       const data = docSnap.data();
+
+      if (isKeyExpired(data)) {
+        res.textContent='❌ This key has expired!'; res.style.color='var(--orange)';
+        document.getElementById('loading').style.display = 'none';
+        return;
+      }
 
       if (data.used) {
         res.textContent='❌ This key has already been used!'; res.style.color='var(--red)';
@@ -522,27 +637,43 @@
   window.genKeys = async function() {
     let n = parseInt(document.getElementById('genCount').value) || 10;
     let pre = document.getElementById('genPrefix').value.toUpperCase() || 'WIN';
+    let expiryVal = selectedExpiryValue;
     
+    let expiresAt = null;
+    let now = Date.now();
+    if (expiryVal === '10s') expiresAt = now + (10 * 1000);
+    else if (expiryVal === '30s') expiresAt = now + (30 * 1000);
+    else if (expiryVal === '1m') expiresAt = now + (60 * 1000);
+    else if (expiryVal === '5m') expiresAt = now + (5 * 60 * 1000);
+    else if (expiryVal === '1h') expiresAt = now + (60 * 60 * 1000);
+    else if (expiryVal === '6h') expiresAt = now + (6 * 60 * 60 * 1000);
+    else if (expiryVal === '24h') expiresAt = now + (24 * 60 * 60 * 1000);
+    else if (expiryVal === '7d') expiresAt = now + (7 * 24 * 60 * 60 * 1000);
+    else if (expiryVal === '30d') expiresAt = now + (30 * 24 * 60 * 60 * 1000);
+
     document.getElementById('genBtnText').textContent = n;
     document.getElementById('loading').style.display = 'flex';
 
     try {
       const batch = writeBatch(db);
-      let now = Date.now();
       let generated = [];
 
       for(let i=0;i<n;i++){
-        // CRYPTOGRAPHICALLY SECURE KEY GENERATION
-        // Generates 4 random hex bytes, maps to string, pads with 0, uppercases
         let r1 = Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
         let r2 = Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
         
         let keyStr = pre + '-' + r1 + '-' + r2;
         
-        // We set the Document ID to be the exact Key Name
         const newDocRef = doc(db, "giveaway_keys", keyStr);
-        batch.set(newDocRef, { k: keyStr, used: false, createdAt: now + i });
-        generated.push({id: newDocRef.id, k: keyStr, used: false, createdAt: now + i});
+        
+        batch.set(newDocRef, { 
+          k: keyStr, 
+          used: false, 
+          createdAt: now + i,
+          expiresAt: expiresAt 
+        });
+        
+        generated.push({id: newDocRef.id, k: keyStr, used: false, createdAt: now + i, expiresAt: expiresAt});
       }
 
       await batch.commit();
@@ -566,9 +697,9 @@
 
     try {
       const newDocRef = doc(db, "giveaway_keys", k);
-      await setDoc(newDocRef, { k: k, used: false, createdAt: Date.now() });
+      await setDoc(newDocRef, { k: k, used: false, createdAt: Date.now(), expiresAt: null });
       
-      keys.unshift({ id: newDocRef.id, k: k, used: false, createdAt: Date.now() });
+      keys.unshift({ id: newDocRef.id, k: k, used: false, createdAt: Date.now(), expiresAt: null });
       document.getElementById('singleKey').value=''; 
       render();
       renderLiveFeed();
@@ -645,22 +776,46 @@
     tb.innerHTML='';
     let filtered = keys.filter(x => x.k.includes(s));
     
+    let unusedCount = 0;
+    let usedCount = 0;
+    let expiredCount = 0;
+
+    keys.forEach(x => {
+      if (x.used) usedCount++;
+      else if (isKeyExpired(x)) expiredCount++;
+      else unusedCount++;
+    });
+
     document.getElementById('tTotal').textContent = keys.length;
-    document.getElementById('tUnused').textContent = keys.filter(x=>!x.used).length;
-    document.getElementById('tUsed').textContent = keys.filter(x=>x.used).length;
-    document.getElementById('tClaims').textContent = keys.filter(x=>x.used).length;
+    document.getElementById('tUnused').textContent = unusedCount;
+    document.getElementById('tUsed').textContent = usedCount;
+    document.getElementById('tExpired').textContent = expiredCount;
     document.getElementById('dbCount').textContent = filtered.length;
     
     filtered.forEach((obj) => {
+      let status = "UNUSED";
+      let statusClass = "unused";
+      let dotClass = "unused";
+      
+      if (obj.used) {
+        status = "USED";
+        statusClass = "used";
+        dotClass = "used";
+      } else if (isKeyExpired(obj)) {
+        status = "EXPIRED";
+        statusClass = "expired";
+        dotClass = "expired";
+      }
+
       let tr = document.createElement('tr');
       tr.innerHTML = `
         <td style="display:flex; align-items:center;">
-          <span class="status-dot ${obj.used ? 'used' : 'unused'}"></span> 
+          <span class="status-dot ${dotClass}"></span> 
           ${obj.k}
         </td>
         <td>
-          <span class="status-badge ${obj.used ? 'used' : 'unused'}">
-            ${obj.used ? 'USED' : 'UNUSED'}
+          <span class="status-badge ${statusClass}">
+            ${status}
           </span>
         </td>
         <td style="text-align:right;">
@@ -721,4 +876,4 @@
 
 </script>
 </body>
-      </html>
+        </html>

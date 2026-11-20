@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Giveaway Pro - Expiring Keys</title>
+<title>Giveaway Pro - Ultimate</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
@@ -48,6 +48,31 @@
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0 1px 1px var(--glass-highlight);
   }
 
+  /* --- TOAST NOTIFICATIONS --- */
+  #toast-container {
+    position: fixed; top: 20px; right: 20px; z-index: 9999;
+    display: flex; flex-direction: column; gap: 10px;
+    pointer-events: none;
+  }
+  .toast {
+    background: rgba(20, 20, 25, 0.85);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px; padding: 16px 20px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 1px 1px var(--glass-highlight);
+    transform: translateX(150%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: auto; max-width: 320px;
+  }
+  .toast.show { transform: translateX(0); }
+  .toast-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .toast.success .toast-icon { background: rgba(32, 201, 151, 0.15); color: var(--green); border: 1px solid rgba(32, 201, 151, 0.3); }
+  .toast.error .toast-icon { background: rgba(255, 77, 79, 0.15); color: var(--red); border: 1px solid rgba(255, 77, 79, 0.3); }
+  .toast.info .toast-icon { background: rgba(255, 204, 0, 0.15); color: var(--gold); border: 1px solid rgba(255, 204, 0, 0.3); }
+  .toast-content { flex: 1; }
+  .toast-title { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+  .toast-msg { font-size: 11px; color: var(--text-muted); }
+
   .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; margin-bottom: 20px; border-radius: 20px; }
   .logo-area { display: flex; align-items: center; gap: 12px; }
   .logo-icon { background: linear-gradient(135deg, #ffcc00, #ff9900); color: #000; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 18px; box-shadow: 0 4px 12px rgba(255, 204, 0, 0.3); }
@@ -64,6 +89,7 @@
   .hero-title h2 { font-size: 38px; font-weight: 800; line-height: 1.05; margin-bottom: 8px; }
   .hero-title h2 span { color: var(--gold); }
   .hero-title p { font-size: 28px; font-weight: 300; font-style: italic; color: #ccc; margin-bottom: 20px; }
+  .hero-title p span { font-style: normal; font-weight: 800; color: #fff; }
   
   .pill-stats { display: flex; gap: 10px; margin-bottom: 20px; }
   .pill { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
@@ -126,7 +152,6 @@
   .gen-inputs input:first-child { width: 80px; text-align: center; }
   .gen-inputs input:last-child { flex: 1; }
   
-  /* CUSTOM FONT AWESOME DROPDOWN */
   .custom-select-wrapper { position: relative; margin-bottom: 12px; }
   .custom-select-trigger {
     width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border);
@@ -216,6 +241,9 @@
 <div class="bg-orb orb-1"></div>
 <div class="bg-orb orb-2"></div>
 
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
 <div id="loading">
   <div class="spinner"></div>
   <p style="font-size:12px; color:#fff; font-weight:600;">Connecting to Secure Server...</p>
@@ -242,7 +270,7 @@
     </div>
     <div class="hero-title">
       <h2>BIG<br><span>GIVEAWAY</span></h2>
-      <p>Win ₦10,000 Airtime</p>
+      <p>Win <span id="userPrizeDisplay">₦10,000</span> Airtime</p>
     </div>
     <div class="pill-stats">
       <div class="pill gold"><i class="fa-solid fa-coins"></i> <span id="keysLeft">Active</span> keys left</div>
@@ -260,7 +288,6 @@
       <span><i class="fa-solid fa-circle-info"></i> Cloud storage</span>
       <span id="sessionCount">Secured by Firebase</span>
     </div>
-    <p id="result" style="text-align:center; font-weight:700; margin-top:16px; font-size:13px;"></p>
   </div>
 
   <div class="features-grid">
@@ -281,7 +308,7 @@
   <div class="info-card">
     <div class="top-row">
       <div class="trophy-icon"><i class="fa-solid fa-trophy"></i></div>
-      <div class="active-badge">ACTIVE • ₦10,000</div>
+      <div class="active-badge">ACTIVE • <span id="infoPrizeDisplay">₦10,000</span></div>
     </div>
     <h3>How to claim in<br>30 seconds</h3>
     <div class="steps">
@@ -319,7 +346,6 @@
     <input id="passwordInput" type="password" placeholder="Password" autocomplete="current-password">
     <button class="btn-primary" onclick="login()">UNLOCK DASHBOARD</button>
     <button class="btn-secondary" onclick="showView('user')">Back to User View</button>
-    <p id="loginError" style="color:var(--red); font-size:11px; margin-top:12px; display:none;"></p>
   </div>
 
   <div id="dash" style="display:none; flex-direction:column; gap:16px;">
@@ -329,6 +355,16 @@
     </div>
     
     <p style="font-size:11px; color:var(--text-muted); padding:0 8px; margin-bottom:8px;">Connected to Firebase Firestore. Changes sync in real-time.</p>
+
+    <!-- PRICE SETTING -->
+    <div class="admin-section glass-panel" style="margin-bottom:0; border-color: rgba(255, 204, 0, 0.3);">
+      <h3><i class="fa-solid fa-tag" style="color: var(--gold);"></i> Update Giveaway Prize</h3>
+      <p>Change the prize amount displayed to users instantly.</p>
+      <div class="add-input-group">
+        <input id="prizeAmountInput" placeholder="e.g. 10,000" style="text-transform:none;">
+        <button onclick="updatePrize()" style="background: var(--gold);"><i class="fa-solid fa-check"></i> SAVE</button>
+      </div>
+    </div>
 
     <div class="stats-grid">
       <div class="stat-card glass-panel">
@@ -358,8 +394,7 @@
         <h3><i class="fa-solid fa-users"></i> Live Feed</h3>
         <span class="log-badge" id="logCount">0 claimed</span>
       </div>
-      <div class="log-list" id="logList">
-      </div>
+      <div class="log-list" id="logList"></div>
     </div>
 
     <div class="admin-section glass-panel">
@@ -371,7 +406,6 @@
         <input id="genPrefix" value="WIN" placeholder="Prefix">
       </div>
       
-      <!-- CUSTOM FONT AWESOME DROPDOWN -->
       <div class="custom-select-wrapper" id="expiryDropdown">
         <div class="custom-select-trigger" onclick="toggleDropdown()">
           <i class="fa-solid fa-clock-rotate-left"></i>
@@ -379,36 +413,16 @@
           <i class="fa-solid fa-chevron-down"></i>
         </div>
         <div class="custom-options">
-          <div class="custom-option selected" data-value="never" onclick="selectOption(this)">
-            <i class="fa-solid fa-infinity"></i> Never Expires
-          </div>
-          <div class="custom-option" data-value="10s" onclick="selectOption(this)">
-            <i class="fa-solid fa-stopwatch"></i> 10 Seconds (Test)
-          </div>
-          <div class="custom-option" data-value="30s" onclick="selectOption(this)">
-            <i class="fa-solid fa-stopwatch"></i> 30 Seconds (Test)
-          </div>
-          <div class="custom-option" data-value="1m" onclick="selectOption(this)">
-            <i class="fa-solid fa-hourglass-start"></i> 1 Minute
-          </div>
-          <div class="custom-option" data-value="5m" onclick="selectOption(this)">
-            <i class="fa-solid fa-hourglass-half"></i> 5 Minutes
-          </div>
-          <div class="custom-option" data-value="1h" onclick="selectOption(this)">
-            <i class="fa-solid fa-hourglass-end"></i> 1 Hour
-          </div>
-          <div class="custom-option" data-value="6h" onclick="selectOption(this)">
-            <i class="fa-solid fa-clock"></i> 6 Hours
-          </div>
-          <div class="custom-option" data-value="24h" onclick="selectOption(this)">
-            <i class="fa-solid fa-calendar-day"></i> 24 Hours (1 Day)
-          </div>
-          <div class="custom-option" data-value="7d" onclick="selectOption(this)">
-            <i class="fa-solid fa-calendar-week"></i> 7 Days
-          </div>
-          <div class="custom-option" data-value="30d" onclick="selectOption(this)">
-            <i class="fa-solid fa-calendar-days"></i> 30 Days
-          </div>
+          <div class="custom-option selected" data-value="never" onclick="selectOption(this)"><i class="fa-solid fa-infinity"></i> Never Expires</div>
+          <div class="custom-option" data-value="10s" onclick="selectOption(this)"><i class="fa-solid fa-stopwatch"></i> 10 Seconds</div>
+          <div class="custom-option" data-value="30s" onclick="selectOption(this)"><i class="fa-solid fa-stopwatch"></i> 30 Seconds</div>
+          <div class="custom-option" data-value="1m" onclick="selectOption(this)"><i class="fa-solid fa-hourglass-start"></i> 1 Minute</div>
+          <div class="custom-option" data-value="5m" onclick="selectOption(this)"><i class="fa-solid fa-hourglass-half"></i> 5 Minutes</div>
+          <div class="custom-option" data-value="1h" onclick="selectOption(this)"><i class="fa-solid fa-hourglass-end"></i> 1 Hour</div>
+          <div class="custom-option" data-value="6h" onclick="selectOption(this)"><i class="fa-solid fa-clock"></i> 6 Hours</div>
+          <div class="custom-option" data-value="24h" onclick="selectOption(this)"><i class="fa-solid fa-calendar-day"></i> 24 Hours</div>
+          <div class="custom-option" data-value="7d" onclick="selectOption(this)"><i class="fa-solid fa-calendar-week"></i> 7 Days</div>
+          <div class="custom-option" data-value="30d" onclick="selectOption(this)"><i class="fa-solid fa-calendar-days"></i> 30 Days</div>
         </div>
       </div>
 
@@ -449,8 +463,7 @@
             <th style="text-align:right;">ACTIONS</th>
           </tr>
         </thead>
-        <tbody id="table">
-        </tbody>
+        <tbody id="table"></tbody>
       </table>
     </div>
   </div>
@@ -486,27 +499,51 @@
 
   let keys = [];
   let selectedExpiryValue = "never";
+  let currentPrize = "10,000";
+
+  // --- TOAST NOTIFICATION FUNCTION ---
+  window.showToast = function(title, message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    let iconClass = 'fa-check';
+    if (type === 'error') iconClass = 'fa-xmark';
+    if (type === 'info') iconClass = 'fa-circle-info';
+
+    toast.innerHTML = `
+      <div class="toast-icon"><i class="fa-solid ${iconClass}"></i></div>
+      <div class="toast-content">
+        <div class="toast-title">${title}</div>
+        <div class="toast-msg">${message}</div>
+      </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Remove after 4 seconds
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 400);
+    }, 4000);
+  }
 
   // CUSTOM DROPDOWN LOGIC
   window.toggleDropdown = function() {
-    const wrapper = document.getElementById('expiryDropdown');
-    wrapper.classList.toggle('open');
+    document.getElementById('expiryDropdown').classList.toggle('open');
   };
 
   window.selectOption = function(element) {
-    // Remove selected class from all
     document.querySelectorAll('.custom-option').forEach(el => el.classList.remove('selected'));
-    // Add to clicked
     element.classList.add('selected');
-    // Update text
     document.getElementById('selectedExpiryText').textContent = element.textContent.trim();
-    // Store value
     selectedExpiryValue = element.getAttribute('data-value');
-    // Close dropdown
     document.getElementById('expiryDropdown').classList.remove('open');
   };
 
-  // Close dropdown if clicked outside
   window.addEventListener('click', function(e) {
     const wrapper = document.getElementById('expiryDropdown');
     if (wrapper && !wrapper.contains(e.target)) {
@@ -524,11 +561,9 @@
   window.login = async function() {
     const email = document.getElementById('emailInput').value;
     const pass = document.getElementById('passwordInput').value;
-    const errBox = document.getElementById('loginError');
     
     if(!email || !pass) {
-      errBox.textContent = "Please enter both email and password.";
-      errBox.style.display = 'block';
+      showToast('Login Error', 'Please enter both email and password.', 'error');
       return;
     }
 
@@ -536,10 +571,10 @@
 
     try {
       await signInWithEmailAndPassword(auth, email, pass);
+      showToast('Welcome Admin', 'Successfully logged in.', 'success');
     } catch (error) {
       document.getElementById('loading').style.display = 'none';
-      errBox.textContent = "Login failed: " + error.message;
-      errBox.style.display = 'block';
+      showToast('Login Failed', error.message, 'error');
     }
   };
 
@@ -549,6 +584,7 @@
     document.getElementById('dash').style.display = 'none';
     document.getElementById('emailInput').value = '';
     document.getElementById('passwordInput').value = '';
+    showToast('Logged Out', 'You have been securely logged out.', 'info');
   };
 
   onAuthStateChanged(auth, (user) => {
@@ -556,32 +592,79 @@
     if (user) {
       document.getElementById('loginBox').style.display = 'none';
       document.getElementById('dash').style.display = 'flex';
-      loadKeysAdmin();
+      loadAdminData();
     } else {
       document.getElementById('loginBox').style.display = 'block';
       document.getElementById('dash').style.display = 'none';
+      loadPublicData();
     }
   });
 
-  async function loadKeysAdmin() {
+  async function loadPublicData() {
+    try {
+      const docSnap = await getDoc(doc(db, "settings", "giveaway"));
+      if (docSnap.exists()) {
+        currentPrize = docSnap.data().prize;
+        updatePrizeUI();
+      }
+    } catch (e) {
+      console.log("Settings not found, using default.");
+    }
+  }
+
+  function updatePrizeUI() {
+    document.getElementById('userPrizeDisplay').textContent = '₦' + currentPrize;
+    document.getElementById('infoPrizeDisplay').textContent = '₦' + currentPrize;
+  }
+
+  async function loadAdminData() {
+    // Load Prize
+    try {
+      const docSnap = await getDoc(doc(db, "settings", "giveaway"));
+      if (docSnap.exists()) {
+        currentPrize = docSnap.data().prize;
+        document.getElementById('prizeAmountInput').value = currentPrize;
+        updatePrizeUI();
+      }
+    } catch (e) { console.log(e); }
+
+    // Load Keys
     try {
       const querySnapshot = await getDocs(collection(db, "giveaway_keys"));
       keys = [];
       querySnapshot.forEach((doc) => {
         keys.push({ id: doc.id, ...doc.data() });
       });
-      
       keys.sort((a, b) => {
         if (a.used !== b.used) return a.used ? 1 : -1;
         return (b.createdAt || 0) - (a.createdAt || 0);
       });
-
       render();
       renderLiveFeed();
     } catch (e) {
       console.error("Error loading admin keys: ", e);
-      alert("Failed to load database. Check Firestore rules.");
+      showToast('Database Error', 'Check Firestore rules.', 'error');
     }
+  }
+
+  window.updatePrize = async function() {
+    let newPrize = document.getElementById('prizeAmountInput').value.trim();
+    if (!newPrize) {
+      showToast('Error', 'Please enter a valid amount.', 'error');
+      return;
+    }
+    
+    document.getElementById('loading').style.display = 'flex';
+    try {
+      await setDoc(doc(db, "settings", "giveaway"), { prize: newPrize });
+      currentPrize = newPrize;
+      updatePrizeUI();
+      showToast('Settings Saved', 'Prize updated to ₦' + newPrize, 'success');
+    } catch (e) {
+      console.error(e);
+      showToast('Error', 'Failed to update prize.', 'error');
+    }
+    document.getElementById('loading').style.display = 'none';
   }
 
   function isKeyExpired(keyData) {
@@ -591,8 +674,7 @@
 
   window.claim = async function() {
     let inp = document.getElementById('keyInput').value.toUpperCase().trim();
-    let res = document.getElementById('result');
-    if(!inp){ res.textContent='⚠️ Please enter a key'; res.style.color='orange'; return; }
+    if(!inp){ showToast('Wait', 'Please enter a key.', 'info'); return; }
     
     document.getElementById('loading').style.display = 'flex';
 
@@ -601,7 +683,7 @@
       const docSnap = await getDoc(docRef);
 
       if (!docSnap.exists()) {
-        res.textContent='❌ Invalid key'; res.style.color='var(--red)';
+        showToast('Invalid Key', 'This key does not exist.', 'error');
         document.getElementById('loading').style.display = 'none';
         return;
       }
@@ -609,26 +691,21 @@
       const data = docSnap.data();
 
       if (isKeyExpired(data)) {
-        res.textContent='❌ This key has expired!'; res.style.color='var(--orange)';
+        showToast('Expired', 'This key has expired!', 'error');
         document.getElementById('loading').style.display = 'none';
         return;
       }
 
       if (data.used) {
-        res.textContent='❌ This key has already been used!'; res.style.color='var(--red)';
+        showToast('Already Used', 'This key has been claimed.', 'error');
       } else {
-        await updateDoc(docRef, {
-          used: true,
-          usedAt: new Date().toLocaleString()
-        });
-        
-        res.textContent='🎉 CONGRATULATIONS! You have won ₦10,000!'; 
-        res.style.color='var(--green)';
+        await updateDoc(docRef, { used: true, usedAt: new Date().toLocaleString() });
+        showToast('Congratulations!', 'You have won ₦' + currentPrize + ' Airtime!', 'success');
         document.getElementById('keyInput').value = '';
       }
     } catch (e) {
       console.error(e);
-      res.textContent='❌ Network error. Try again.'; res.style.color='var(--red)';
+      showToast('Network Error', 'Please try again.', 'error');
     }
     
     document.getElementById('loading').style.display = 'none';
@@ -661,29 +738,21 @@
       for(let i=0;i<n;i++){
         let r1 = Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
         let r2 = Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-        
         let keyStr = pre + '-' + r1 + '-' + r2;
         
         const newDocRef = doc(db, "giveaway_keys", keyStr);
-        
-        batch.set(newDocRef, { 
-          k: keyStr, 
-          used: false, 
-          createdAt: now + i,
-          expiresAt: expiresAt 
-        });
-        
+        batch.set(newDocRef, { k: keyStr, used: false, createdAt: now + i, expiresAt: expiresAt });
         generated.push({id: newDocRef.id, k: keyStr, used: false, createdAt: now + i, expiresAt: expiresAt});
       }
 
       await batch.commit();
-      
       keys = [...generated, ...keys];
       render();
       renderLiveFeed();
+      showToast('Success', `Generated ${n} new keys.`, 'success');
     } catch (e) {
       console.error(e);
-      alert("Error generating keys.");
+      showToast('Error', 'Failed to generate keys.', 'error');
     }
     
     document.getElementById('loading').style.display = 'none';
@@ -698,14 +767,14 @@
     try {
       const newDocRef = doc(db, "giveaway_keys", k);
       await setDoc(newDocRef, { k: k, used: false, createdAt: Date.now(), expiresAt: null });
-      
       keys.unshift({ id: newDocRef.id, k: k, used: false, createdAt: Date.now(), expiresAt: null });
       document.getElementById('singleKey').value=''; 
       render();
       renderLiveFeed();
+      showToast('Key Added', 'Custom key created successfully.', 'success');
     } catch (e) {
       console.error(e);
-      alert("Error adding key. (Key might already exist)");
+      showToast('Error', 'Key might already exist.', 'error');
     }
     
     document.getElementById('loading').style.display = 'none';
@@ -719,9 +788,10 @@
         keys = keys.filter(x => x.id !== id);
         render();
         renderLiveFeed();
+        showToast('Deleted', 'Key removed from database.', 'info');
       } catch (e) {
         console.error(e);
-        alert("Error deleting key.");
+        showToast('Error', 'Failed to delete key.', 'error');
       }
       document.getElementById('loading').style.display = 'none';
     } 
@@ -736,13 +806,13 @@
         const batch = writeBatch(db);
         snapshot.forEach((doc) => { batch.delete(doc.ref); });
         await batch.commit();
-        
         keys = keys.filter(x => !x.used);
         render();
         renderLiveFeed();
+        showToast('Cleared', 'Used keys removed.', 'info');
       } catch (e) {
         console.error(e);
-        alert("Error clearing used keys.");
+        showToast('Error', 'Failed to clear keys.', 'error');
       }
       document.getElementById('loading').style.display = 'none';
     } 
@@ -756,13 +826,13 @@
         const batch = writeBatch(db);
         snapshot.forEach((doc) => { batch.delete(doc.ref); });
         await batch.commit();
-        
         keys = [];
         render();
         renderLiveFeed();
+        showToast('Wiped', 'All keys deleted.', 'info');
       } catch (e) {
         console.error(e);
-        alert("Error deleting all keys.");
+        showToast('Error', 'Failed to delete keys.', 'error');
       }
       document.getElementById('loading').style.display = 'none';
     } 
@@ -776,9 +846,7 @@
     tb.innerHTML='';
     let filtered = keys.filter(x => x.k.includes(s));
     
-    let unusedCount = 0;
-    let usedCount = 0;
-    let expiredCount = 0;
+    let unusedCount = 0, usedCount = 0, expiredCount = 0;
 
     keys.forEach(x => {
       if (x.used) usedCount++;
@@ -793,31 +861,16 @@
     document.getElementById('dbCount').textContent = filtered.length;
     
     filtered.forEach((obj) => {
-      let status = "UNUSED";
-      let statusClass = "unused";
-      let dotClass = "unused";
-      
-      if (obj.used) {
-        status = "USED";
-        statusClass = "used";
-        dotClass = "used";
-      } else if (isKeyExpired(obj)) {
-        status = "EXPIRED";
-        statusClass = "expired";
-        dotClass = "expired";
-      }
+      let status = "UNUSED", statusClass = "unused", dotClass = "unused";
+      if (obj.used) { status = "USED"; statusClass = "used"; dotClass = "used"; }
+      else if (isKeyExpired(obj)) { status = "EXPIRED"; statusClass = "expired"; dotClass = "expired"; }
 
       let tr = document.createElement('tr');
       tr.innerHTML = `
         <td style="display:flex; align-items:center;">
-          <span class="status-dot ${dotClass}"></span> 
-          ${obj.k}
+          <span class="status-dot ${dotClass}"></span> ${obj.k}
         </td>
-        <td>
-          <span class="status-badge ${statusClass}">
-            ${status}
-          </span>
-        </td>
+        <td><span class="status-badge ${statusClass}">${status}</span></td>
         <td style="text-align:right;">
           <div class="action-btns">
             <button class="icon-btn" onclick="copyK('${obj.k}')" title="Copy"><i class="fa-regular fa-copy"></i></button>
@@ -830,12 +883,8 @@
   }
 
   window.renderLiveFeed = function() {
-    let usedKeys = keys.filter(x => x.used).sort((a,b) => {
-      return new Date(b.usedAt).getTime() - new Date(a.usedAt).getTime();
-    });
-    
+    let usedKeys = keys.filter(x => x.used).sort((a,b) => new Date(b.usedAt).getTime() - new Date(a.usedAt).getTime());
     document.getElementById('logCount').textContent = usedKeys.length + " claimed";
-    
     let list = document.getElementById('logList');
     list.innerHTML = '';
     
@@ -862,7 +911,7 @@
 
   window.copyK = function(k) { 
     navigator.clipboard.writeText(k); 
-    alert('Copied to clipboard: ' + k); 
+    showToast('Copied', k + ' copied to clipboard.', 'info'); 
   }
 
   window.exportKeys = function() { 
@@ -872,8 +921,9 @@
     a.href = URL.createObjectURL(b); 
     a.download = 'giveaway-keys.txt'; 
     a.click(); 
+    showToast('Exported', 'Keys downloaded as TXT file.', 'success');
   }
 
 </script>
 </body>
-        </html>
+  </html>
